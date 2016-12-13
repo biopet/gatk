@@ -31,9 +31,8 @@ import org.broadinstitute.gatk.queue.util.Logging
 import org.ggf.drmaa.Session
 
 /**
- * Runs jobs on a PBS/Torque Engine compute cluster.
- * NB - THIS FILE HAS BEEN MODIFIED from the original code
- * of the GridEngine package
+ * Runs jobs on a SLURM compute cluster.
+ * This requires to install this plugin for SLURM: http://apps.man.poznan.pl/trac/slurm-drmaa
  */
 class SlurmJobRunner(session: Session, function: CommandLineFunction) extends DrmaaJobRunner(session, function) with Logging {
   // Pbs Engine disallows certain characters from being in job names.
@@ -47,28 +46,17 @@ class SlurmJobRunner(session: Session, function: CommandLineFunction) extends Dr
   	// create nativeSpec variable
   		var nativeSpec: String = ""
 
-    // If a project name is set specify the project name
-//    if (function.jobProject != null)
-//      nativeSpec += " -P " + function.jobProject
-
-    // If the job queue is set specify the job queue
-    if (function.jobQueue != null)
-      nativeSpec += " --qos " + function.jobQueue
-
-    // If the resident set size is requested pass on the memory request
-    // mem_free is the standard, but may also be virtual_free or even not available
-    
-//    if (function.qSettings.residentRequestParameter != null && function.residentRequest.isDefined)
-//      nativeSpec += " -l %s=%dM".format(function.qSettings.residentRequestParameter, function.residentRequest.map(_ * 1024).get.ceil.toInt)
+    // If the qualityOfSerice is set specify the qualityOfSerice
+    function.qualityOfSerice.foreach(nativeSpec += " --qos=" + _)
 
     // If the resident set size limit is defined specify the memory limit
     function.residentLimit.map(l => (l * 1024).ceil.toInt).foreach(l => nativeSpec += s" --mem=${l}")
 
+    // If walltime is set specify the walltime
     function.wallTime.foreach(t => nativeSpec += s" --time=${t}:00:00")
 
     // If more than 1 core is requested, set the proper request
     // the cores will be requested as part of a single node
-    
     if ( function.nCoresRequest.getOrElse(1) > 1 ) {
       if ( function.qSettings.dontRequestMultipleCores )
         logger.warn("Sending multicore job %s to farm without requesting appropriate number of cores (%d)".format(
@@ -77,23 +65,8 @@ class SlurmJobRunner(session: Session, function: CommandLineFunction) extends Dr
         nativeSpec += " --ntasks=%d".format(function.nCoresRequest.getOrElse(1))
     }
 
-    // Pass on any job resource requests
-    // NB: blank because resource requests in PBS can be preceded by different
-    // arguments, i.e. -l but also -o or -j if they are not exactly "resources" strictly speaking
-    // therefore the user will add them in the request, i.e. -jobResReq "-j oe"
-    // but this will allow more flexibility in setting the options for PBS jobs on different Clusters
-    
-    nativeSpec += function.jobResourceRequests.map(" " + _).mkString
-
-    // Pass on any job environment names
-    nativeSpec += function.jobEnvironmentNames.map(" " + _).mkString
-
-    // If the priority is set specify the priority
-    val priority = functionPriority
-    if (priority.isDefined)
-      nativeSpec += " -p " + priority.get
-
-    logger.debug("Native spec is: %s".format(nativeSpec))
-    (nativeSpec + " " + super.functionNativeSpec).trim()
+    val n = nativeSpec + " " + super.functionNativeSpec
+    logger.debug(s"Native spec is: $n")
+    n.trim()
   }
 }
