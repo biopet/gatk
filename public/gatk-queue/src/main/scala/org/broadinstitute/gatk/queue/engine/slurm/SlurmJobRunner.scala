@@ -66,7 +66,7 @@ class SlurmJobRunner(session: Session, function: CommandLineFunction) extends Dr
     }
 
     val n = nativeSpec + " " + super.functionNativeSpec
-    logger.debug(s"Native spec is: $n")
+    logger.info(s"Native spec is: $n")
     n.trim()
   }
 }
