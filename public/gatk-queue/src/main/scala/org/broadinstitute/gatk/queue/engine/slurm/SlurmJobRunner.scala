@@ -65,19 +65,19 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
    */
   def start() {
 
-    val srunOptions = new ArrayBuffer[String]
-    srunOptions.append("sh", "srun")
+    val srunCommand = new ArrayBuffer[String]
+    srunCommand.append("srun")
 
-    function.qualityOfSerice.foreach(srunOptions.append("-qos", _))
-    function.residentLimit.foreach(mem => srunOptions.append("--mem", s"${mem.ceil}G"))
-    function.wallTime.foreach(time => srunOptions.append("--time", s"${time}:00:00"))
-    function.jobNativeArgs.foreach(arg => srunOptions.append(arg.split(" "):_*))
+    function.qualityOfSerice.foreach(srunCommand.append("-qos", _))
+    function.residentLimit.foreach(mem => srunCommand.append("--mem", s"${mem.ceil}G"))
+    function.wallTime.foreach(time => srunCommand.append("--time", s"${time}:00:00"))
+    function.jobNativeArgs.foreach(arg => srunCommand.append(arg.split(" "):_*))
 
-    logger.info(s"Native arguments: ${srunOptions.tail.mkString(" ")}")
+    logger.info(s"Native arguments: ${srunCommand.tail.mkString(" ")}")
 
-    srunOptions.append(jobScript.getAbsolutePath)
+    srunCommand.append(jobScript.getAbsolutePath)
 
-    val commandLine = srunOptions.toArray
+    val commandLine = Array("sh", "-c", srunCommand.mkString(" "))
     val stdoutSettings = new OutputStreamSettings
     val stderrSettings = new OutputStreamSettings
     val mergeError = function.jobErrorFile == null
