@@ -23,11 +23,11 @@
 * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package org.broadinstitute.gatk.queue.engine.slurm
+package org.broadinstitute.gatk.queue.engine.slurmdrmaa
 
 import org.broadinstitute.gatk.queue.engine.drmaa.DrmaaJobManager
 import org.broadinstitute.gatk.queue.function.CommandLineFunction
 
-class SlurmJobManager extends DrmaaJobManager {
-  override def create(function: CommandLineFunction) = new SlurmJobRunner(session, function)
+class SlurmDrmaaJobManager extends DrmaaJobManager {
+  override def create(function: CommandLineFunction) = new SlurmDrmaaJobRunner(session, function)
 }

@@ -23,7 +23,7 @@
 * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package org.broadinstitute.gatk.queue.engine.slurm
+package org.broadinstitute.gatk.queue.engine.slurmdrmaa
 
 import org.broadinstitute.gatk.queue.engine.drmaa.DrmaaJobRunner
 import org.broadinstitute.gatk.queue.function.CommandLineFunction
@@ -34,7 +34,7 @@ import org.ggf.drmaa.Session
  * Runs jobs on a SLURM compute cluster.
  * This requires to install this plugin for SLURM: http://apps.man.poznan.pl/trac/slurm-drmaa
  */
-class SlurmJobRunner(session: Session, function: CommandLineFunction) extends DrmaaJobRunner(session, function) with Logging {
+class SlurmDrmaaJobRunner(session: Session, function: CommandLineFunction) extends DrmaaJobRunner(session, function) with Logging {
   // Pbs Engine disallows certain characters from being in job names.
   // This replaces all illegal characters with underscores
   protected override val jobNameFilter = """[\n\t\r/:,@\\*?]"""
