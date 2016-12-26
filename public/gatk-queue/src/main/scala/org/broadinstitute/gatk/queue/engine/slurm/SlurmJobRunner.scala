@@ -66,7 +66,7 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
   def start() {
 
     val srunOptions = new ArrayBuffer[String]
-    srunOptions.append("srun")
+    srunOptions.append("sh", "srun")
 
     function.qualityOfSerice.foreach(srunOptions.append("-qos", _))
     function.residentLimit.foreach(mem => srunOptions.append("--mem", s"${mem.ceil}G"))
