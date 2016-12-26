@@ -70,7 +70,7 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
 
     function.qualityOfSerice.foreach(srunOptions.append("-qos", _))
     function.residentLimit.foreach(mem => srunOptions.append("--mem", s"${mem.ceil}G"))
-    function.wallTime.foreach(time => srunOptions.append("--time", s"${time.ceil}:00:00"))
+    function.wallTime.foreach(time => srunOptions.append("--time", s"${time}:00:00"))
     function.jobNativeArgs.foreach(arg => srunOptions.append(arg.split(" "):_*))
 
     logger.info(s"Native arguments: ${srunOptions.tail.mkString(" ")}")
