@@ -48,7 +48,7 @@ import scala.util.{Failure, Success}
  * All this code is based on the normal shell runner in GATK Queue and all
  * credits for everything except the concurrency part goes to the GATK team.
  *
- * @author Johan Dahlberg - 20150611
+ * @author Peter van 't Hof
  *
  * @param function Command to run.
  */
@@ -68,16 +68,18 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
     val srunCommand = new ArrayBuffer[String]
     srunCommand.append("srun")
 
-    function.qualityOfSerice.foreach(srunCommand.append("-qos", _))
-    function.residentLimit.foreach(mem => srunCommand.append("--mem", s"${mem.ceil}G"))
-    function.wallTime.foreach(time => srunCommand.append("--time", s"${time}:00:00"))
+    srunCommand.append(s"--job-name=${function.jobName}")
+    function.qualityOfSerice.foreach(qos => srunCommand.append(s"--qos=$qos"))
+    function.residentLimit.foreach(mem => srunCommand.append(s"--mem=${mem.ceil.toInt}G"))
+    function.wallTime.foreach(time => srunCommand.append(s"--time=$time:00:00"))
     function.jobNativeArgs.foreach(arg => srunCommand.append(arg.split(" "):_*))
 
     logger.info(s"Native arguments: ${srunCommand.tail.mkString(" ")}")
 
+    jobScript.setExecutable(true)
     srunCommand.append(jobScript.getAbsolutePath)
 
-    val commandLine = Array("sh", "-c", srunCommand.mkString(" "))
+    val commandLine = srunCommand.toArray
     val stdoutSettings = new OutputStreamSettings
     val stderrSettings = new OutputStreamSettings
     val mergeError = function.jobErrorFile == null

@@ -33,6 +33,8 @@ import org.ggf.drmaa.Session
 /**
  * Runs jobs on a SLURM compute cluster.
  * This requires to install this plugin for SLURM: http://apps.man.poznan.pl/trac/slurm-drmaa
+ *
+ * @author Peter van 't Hof
  */
 class SlurmDrmaaJobRunner(session: Session, function: CommandLineFunction) extends DrmaaJobRunner(session, function) with Logging {
   // Pbs Engine disallows certain characters from being in job names.

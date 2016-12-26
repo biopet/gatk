@@ -37,7 +37,7 @@ import org.broadinstitute.gatk.queue.function.CommandLineFunction
  * All this code is based on the normal shell runner in GATK Queue and all 
  * credits for everything except the concurrency part goes to the GATK team.
  * 
- * @author Johan Dahlberg
+ * @author Peter van 't Hof
  *
  */
 class SlurmJobManager extends CommandLineJobManager[SlurmJobRunner] {
