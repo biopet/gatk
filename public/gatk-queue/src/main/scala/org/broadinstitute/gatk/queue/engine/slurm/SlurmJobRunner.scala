@@ -35,9 +35,9 @@ import org.broadinstitute.gatk.utils.Utils
 import org.broadinstitute.gatk.utils.runtime.{OutputStreamSettings, ProcessSettings}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util.{Failure, Success}
+import java.util.concurrent.Executors
 
 /**
  * Runs multiple jobs locally without blocking.
@@ -72,6 +72,7 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
     function.qualityOfSerice.foreach(qos => srunCommand.append(s"--qos=$qos"))
     function.residentLimit.foreach(mem => srunCommand.append(s"--mem=${mem.ceil.toInt}G"))
     function.wallTime.foreach(time => srunCommand.append(s"--time=$time:00:00"))
+    function.nCoresRequest.foreach(cores => srunCommand.append(s"--cpus-per-task=$cores"))
     function.jobNativeArgs.foreach(arg => srunCommand.append(arg.split(" "):_*))
 
     logger.info(s"Native arguments: ${srunCommand.tail.mkString(" ")}")
@@ -102,6 +103,17 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
     getRunInfo.startTime = new Date()
     getRunInfo.exechosts = Utils.resolveHostname()
     updateStatus(RunnerStatus.RUNNING)
+
+    // Spawn a new thread for each process
+    implicit val ec = new ExecutionContext {
+      val threadPool = Executors.newFixedThreadPool(1)
+
+      def execute(runnable: Runnable) {
+        threadPool.submit(runnable)
+      }
+
+      def reportFailure(t: Throwable) {}
+    }
 
     // Run the command line process in a future.
     val executedFuture =
