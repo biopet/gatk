@@ -117,7 +117,10 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
 
     // Run the command line process in a future.
     val executedFuture =
-      future { controller.exec(processSettings) }
+      future {
+        this.function.waitBeforeJob.foreach(x => Thread.sleep(1000 * x))
+        controller.exec(processSettings)
+      }
 
     // Register a callback on the completion of the future, making sure that
     // the status of the job is updated accordingly. 

@@ -104,6 +104,9 @@ class QSettings {
   @ClassType(classOf[String])
   var qualityOfSerice: Option[String] = None
 
+  @Argument(fullName="waitBeforeJob", shortName="waitBeforeJob", doc="For Slurm the job submision waits number of seconds, incase of io delay on staorage. Default is 5 seconds", required=false)
+  var waitBeforeJob: Int = 5
+
   /**
    * If set, use Broad-specific cluster settings in the GridEngine job runner. Activated via the -qsub-broad argument in QGraphSettings.
    */
