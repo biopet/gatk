@@ -100,11 +100,11 @@ class QSettings {
   @Argument(fullName="log_directory", shortName="logDir", doc="Directory to write log files into.", required=false)
   var logDirectory: File = _
 
-  @Argument(fullName = "quality_of_serice", shortName = "qos", doc="Quality of Serice for Slurm", required=false)
+  @Argument(fullName = "quality_of_service", shortName = "qos", doc="Quality of Service for Slurm", required=false)
   @ClassType(classOf[String])
   var qualityOfSerice: Option[String] = None
 
-  @Argument(fullName="waitBeforeJob", shortName="waitBeforeJob", doc="For Slurm the job submision waits number of seconds, incase of io delay on staorage. Default is 5 seconds", required=false)
+  @Argument(fullName="waitBeforeJob", shortName="waitBeforeJob", doc="For Slurm the job submision waits number of seconds, incase of io delay on storage. Default is 5 seconds", required=false)
   var waitBeforeJob: Int = 5
 
   /**
