@@ -104,16 +104,7 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
     getRunInfo.exechosts = Utils.resolveHostname()
     updateStatus(RunnerStatus.RUNNING)
 
-    // Spawn a new thread for each process
-    implicit val ec = new ExecutionContext {
-      val threadPool = Executors.newFixedThreadPool(1)
-
-      def execute(runnable: Runnable) {
-        threadPool.submit(runnable)
-      }
-
-      def reportFailure(t: Throwable) {}
-    }
+    implicit val ec =  SlurmJobRunner.ec
 
     // Run the command line process in a future.
     val executedFuture =
@@ -181,5 +172,18 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
       updateStatus(status)
       false
     }
+  }
+}
+
+object SlurmJobRunner {
+  // Spawn a new thread for each process
+  val ec = new ExecutionContext {
+    val threadPool = Executors.newFixedThreadPool(1000)
+
+    def execute(runnable: Runnable) {
+      threadPool.submit(runnable)
+    }
+
+    def reportFailure(t: Throwable) {}
   }
 }
