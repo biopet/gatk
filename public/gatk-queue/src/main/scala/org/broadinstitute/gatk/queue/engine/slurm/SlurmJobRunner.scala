@@ -167,8 +167,8 @@ class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRu
       exitStatusUpdateJobRunnerStatus(completedExitStatus)
       true
     } else {
-      // Make sure the status is update here, otherwise Queue will think
-      // it's lots control over the job and kill it after 5 minutes.
+      // Make sure the status is updated here, otherwise Queue will think
+      // it has lost control over the job and kill it after 5 minutes.
       updateStatus(status)
       false
     }

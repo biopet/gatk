@@ -48,7 +48,7 @@ class SlurmDrmaaJobRunner(session: Session, function: CommandLineFunction) exten
   	// create nativeSpec variable
   		var nativeSpec: String = ""
 
-    // If the qualityOfSerice is set specify the qualityOfSerice
+    // If the qualityOfSerice is set, specify the qualityOfSerice
     function.qualityOfSerice.foreach(nativeSpec += " --qos=" + _)
 
     // If the resident set size limit is defined specify the memory limit

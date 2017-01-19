@@ -72,6 +72,7 @@ class ThreadSafeProcessController extends Logging {
     }
 
     val stringStdOutPrinterFunc = printToWriter(stdOutPrintWriter.get) _
+    // When stdErr is not defined this write to stdOut
     val stringStdErrPrinterFunc = stdErrPrintWriter match {
       case Some(x) => printToWriter(x) _
       case _       => printToWriter(stdOutPrintWriter.get) _
