@@ -1,6 +1,6 @@
 /*
 * Copyright 2012-2016 Broad Institute, Inc.
-* 
+*
 * Permission is hereby granted, free of charge, to any person
 * obtaining a copy of this software and associated documentation
 * files (the "Software"), to deal in the Software without
@@ -9,10 +9,10 @@
 * copies of the Software, and to permit persons to whom the
 * Software is furnished to do so, subject to the following
 * conditions:
-* 
+*
 * The above copyright notice and this permission notice shall be
 * included in all copies or substantial portions of the Software.
-* 
+*
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,19 +23,21 @@
 * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package org.broadinstitute.gatk.queue.engine.parallelshell
+package org.broadinstitute.gatk.queue.engine.slurm
 
-import org.broadinstitute.gatk.queue.function.CommandLineFunction
-import org.broadinstitute.gatk.queue.engine.{CommandLineJobRunner, RunnerStatus}
 import java.util.Date
-import java.util.concurrent.Executors
 
+import org.broadinstitute.gatk.queue.engine.parallelshell.ThreadSafeProcessController
+import org.broadinstitute.gatk.queue.engine.{CommandLineJobRunner, RunnerStatus}
+import org.broadinstitute.gatk.queue.function.CommandLineFunction
+import org.broadinstitute.gatk.queue.util.Logging
 import org.broadinstitute.gatk.utils.Utils
 import org.broadinstitute.gatk.utils.runtime.{OutputStreamSettings, ProcessSettings}
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
 import scala.util.{Failure, Success}
-import org.broadinstitute.gatk.queue.util.Logging
+import java.util.concurrent.Executors
 
 /**
  * Runs multiple jobs locally without blocking.
@@ -46,11 +48,11 @@ import org.broadinstitute.gatk.queue.util.Logging
  * All this code is based on the normal shell runner in GATK Queue and all
  * credits for everything except the concurrency part goes to the GATK team.
  *
- * @author Johan Dahlberg - 20150611
+ * @author Peter van 't Hof
  *
  * @param function Command to run.
  */
-class ParallelShellJobRunner(val function: CommandLineFunction) extends CommandLineJobRunner with Logging {
+class SlurmJobRunner(val function: CommandLineFunction) extends CommandLineJobRunner with Logging {
 
   // Controller on the thread that started the job
   val controller: ThreadSafeProcessController = new ThreadSafeProcessController()
@@ -62,7 +64,23 @@ class ParallelShellJobRunner(val function: CommandLineFunction) extends CommandL
    * Runs the function on the local shell.
    */
   def start() {
-    val commandLine = Array("sh", jobScript.getAbsolutePath)
+
+    val srunCommand = new ArrayBuffer[String]
+    srunCommand.append("srun")
+
+    srunCommand.append(s"--job-name=${function.jobName}")
+    function.qualityOfSerice.foreach(qos => srunCommand.append(s"--qos=$qos"))
+    function.residentLimit.foreach(mem => srunCommand.append(s"--mem=${mem.ceil.toInt}G"))
+    function.wallTime.foreach(time => srunCommand.append(s"--time=$time:00:00"))
+    function.nCoresRequest.foreach(cores => srunCommand.append(s"--cpus-per-task=$cores"))
+    function.jobNativeArgs.foreach(arg => srunCommand.append(arg.split(" "):_*))
+
+    logger.info(s"Native arguments: ${srunCommand.tail.mkString(" ")}")
+
+    jobScript.setExecutable(true)
+    srunCommand.append(jobScript.getAbsolutePath)
+
+    val commandLine = srunCommand.toArray
     val stdoutSettings = new OutputStreamSettings
     val stderrSettings = new OutputStreamSettings
     val mergeError = function.jobErrorFile == null
@@ -86,20 +104,14 @@ class ParallelShellJobRunner(val function: CommandLineFunction) extends CommandL
     getRunInfo.exechosts = Utils.resolveHostname()
     updateStatus(RunnerStatus.RUNNING)
 
-    // Spawn a new thread for each process
-    implicit val ec = new ExecutionContext {
-      val threadPool = Executors.newFixedThreadPool(1)
-
-      def execute(runnable: Runnable) {
-        threadPool.submit(runnable)
-      }
-
-      def reportFailure(t: Throwable) {}
-    }
+    implicit val ec =  SlurmJobRunner.ec
 
     // Run the command line process in a future.
     val executedFuture =
-      future { controller.exec(processSettings) }
+      future {
+        this.function.waitBeforeJob.foreach(x => Thread.sleep(1000 * x))
+        controller.exec(processSettings)
+      }
 
     // Register a callback on the completion of the future, making sure that
     // the status of the job is updated accordingly. 
@@ -155,10 +167,23 @@ class ParallelShellJobRunner(val function: CommandLineFunction) extends CommandL
       exitStatusUpdateJobRunnerStatus(completedExitStatus)
       true
     } else {
-      // Make sure the status is update here, otherwise Queue will think
-      // it's lots control over the job and kill it after 5 minutes.
+      // Make sure the status is updated here, otherwise Queue will think
+      // it has lost control over the job and kill it after 5 minutes.
       updateStatus(status)
       false
     }
+  }
+}
+
+object SlurmJobRunner {
+  // Spawn a new thread for each process
+  val ec = new ExecutionContext {
+    val threadPool = Executors.newFixedThreadPool(1000)
+
+    def execute(runnable: Runnable) {
+      threadPool.submit(runnable)
+    }
+
+    def reportFailure(t: Throwable) {}
   }
 }
