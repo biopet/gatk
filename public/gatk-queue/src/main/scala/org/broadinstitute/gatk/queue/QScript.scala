@@ -27,9 +27,11 @@ package org.broadinstitute.gatk.queue
 
 import engine.JobRunInfo
 import org.broadinstitute.gatk.queue.function.QFunction
-import annotation.target.field
+
 import util._
 import org.broadinstitute.gatk.utils.commandline.ArgumentSource
+
+import scala.annotation.meta.field
 
 /**
  * Defines a Queue pipeline as a collection of CommandLineFunctions.
