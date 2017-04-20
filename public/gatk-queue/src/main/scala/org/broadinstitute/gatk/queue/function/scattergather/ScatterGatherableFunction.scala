@@ -192,7 +192,7 @@ trait ScatterGatherableFunction extends CommandLineFunction {
       // Setup the fields on the clone function, outputting each as a relative file in the sg directory.
       scatterFunction.initCloneInputs(cloneFunction, i)
       for (gatherField <- outputFieldsWithValues) {
-        val gatherPart = new File(gatherOutputs(gatherField).getName)
+        val gatherPart = new File(cloneFunction.commandDirectory, gatherOutputs(gatherField).getName)
         cloneFunction.setFieldValue(gatherField, gatherPart)
       }
 
