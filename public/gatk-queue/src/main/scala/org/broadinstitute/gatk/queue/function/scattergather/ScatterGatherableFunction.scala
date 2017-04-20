@@ -207,7 +207,7 @@ trait ScatterGatherableFunction extends CommandLineFunction {
 
       // Set each of the clone outputs to be absolute paths.
       for (gatherField <- outputFieldsWithValues) {
-        val gatherPart = IOUtils.absolute(cloneFunction.commandDirectory, cloneFunction.getFieldFile(gatherField))
+        val gatherPart = IOUtils.absolute(cloneFunction.jobLocalDir, cloneFunction.getFieldFile(gatherField))
         cloneFunction.setFieldValue(gatherField, gatherPart)
       }
 
